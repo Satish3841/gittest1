@@ -1,0 +1,39 @@
+00:00:00.000351 main     VirtualBox COM Server 6.0.12 r133076 win.amd64 (Sep  3 2019 10:36:06) release log
+00:00:00.000353 main     Log opened 2019-11-13T15:15:24.796953400Z
+00:00:00.000354 main     Build Type: release
+00:00:00.000359 main     OS Product: Windows 10
+00:00:00.000360 main     OS Release: 10.0.17763
+00:00:00.000361 main     OS Service Pack: 
+00:00:00.053439 main     DMI Product Name: Precision 7710
+00:00:00.063275 main     DMI Product Version: 
+00:00:00.063283 main     Host RAM: 32699MB (31.9GB) total, 27991MB (27.3GB) available
+00:00:00.063290 main     Executable: C:\Program Files\Oracle\VirtualBox\VBoxSVC.exe
+00:00:00.063291 main     Process ID: 11672
+00:00:00.063292 main     Package type: WINDOWS_64BITS_GENERIC
+00:00:00.444071          VirtualBox: object creation starts
+00:00:00.444176          Home directory: 'C:\Users\sramine1'
+00:00:00.444281          Installed Drivers:
+00:00:00.446518            C:\WINDOWS\system32\DRIVERS\VBoxNetLwf.sys (Version: 6.0.12.33076)
+00:00:00.447311            C:\WINDOWS\system32\DRIVERS\VBoxUSBMon.sys (Version: 6.0.12.33076)
+00:00:00.447741            C:\Program Files\Oracle\VirtualBox\drivers\vboxdrv\VBoxDrv.sys (Version: 6.0.12.33076)
+00:00:00.448960            C:\WINDOWS\system32\DRIVERS\VBoxNetAdp6.sys (Version: 6.0.12.33076)
+00:00:00.456850          Loading settings file "C:\Users\sramine1\VirtualBox.xml" with version "1.12-windows"
+00:00:00.463757          Getting USB descriptor (id 0) failed with error 31
+00:00:00.463886          Getting USB descriptor (id 0) failed with error 31
+00:00:00.483144          USB: Unknown USB device detected (idVendor: 0x0a5c, idProduct: 0x5832)
+00:00:00.483185          USB: Unknown USB device detected (idVendor: 0x8087, idProduct: 0x0a2b)
+00:00:00.691069          HostDnsMonitor::updateInfo
+00:00:00.691093          HostDnsMonitor: old information
+00:00:00.691095            no server entries
+00:00:00.691096            no domain set
+00:00:00.691096            no search string entries
+00:00:00.691097          HostDnsMonitor: new information
+00:00:00.691098            server 1: 19.106.96.250
+00:00:00.691099            server 2: 19.106.100.250
+00:00:00.691099            server 3: 19.155.192.72
+00:00:00.691100            domain: whq.ford.com
+00:00:00.691100            search string 1: whq.ford.com
+00:00:00.691101            search string 2: Servers.ford.com
+00:00:00.691101            search string 3: ford.com
+00:00:00.691102            search string 4: itbic.ford.com
+00:00:00.764946          VD: VDInit finished with VINF_SUCCESS
