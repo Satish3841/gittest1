@@ -18,8 +18,7 @@
 00:00:00.483144          USB: Unknown USB device detected (idVendor: 0x0a5c, idProduct: 0x5832)
 00:00:00.483185          USB: Unknown USB device detected (idVendor: 0x8087, idProduct: 0x0a2b)
 00:00:00.691093          HostDnsMonitor: old information
-00:00:00.691095            no server entries
-vkhfvkajf
+
 00:00:00.691096            no domain set
 00:00:00.691096            no search string entries
 00:00:00.691097          HostDnsMonitor: new information
