@@ -1,21 +1,3 @@
-Skip to content
- Enterprise
-Search or jump to…
-
-Pull requests
-Issues
-Explore
- 
-@SRAMINE1 
-1
-00AEM-Engineering/aem-ssl-ihs
- Code Issues 1 Pull requests 1 Projects 0 Wiki Insights Settings
-aem-ssl-ihs/habitat/hooks/run
-@SRAMINE1 SRAMINE1 Update run
-be4c4c2 9 days ago
-@AYELETI@SRAMINE1@JSTASKO2
-290 lines (261 sloc)  12.1 KB
-  
 #!/bin/bash
 
     exec 2>&1
@@ -25,134 +7,56 @@ be4c4c2 9 days ago
     function CERT_BKUP_RESTORE()
     {
         FLAG=$1
-        CP_KDB_STATUS=0;CP_CERT_STATUS=0;CP_CSR_STATUS=0;CP_JSON_STATUS=0;CP_RDB_STATUS=0;CP_CRL_STATUS=0;CP_STH_STATUS=0
-
-        RDB="${SSL_SVC_DATA_PATH}/${SERVICE_HOSTNAME}.rdb"
-        CRL="${SSL_SVC_DATA_PATH}/${SERVICE_HOSTNAME}.crl"
-        STH="${SSL_SVC_DATA_PATH}/${SERVICE_HOSTNAME}.sth"
-
-	echo "${KDB} ,${CERT} ,${CSR} , ${RDB} ,${CRL} ,${STH} ,${HOST_REQUEST_JSON} , ${USER_CONFIG_DIR} "
-
-                USER_CONFIG_BR_DIR="${USER_CONFIG_DIR}/backup_restore"
-                echo "Creating a temporary certificate backup directory"
+        MKDIR_STATUS=0
+        CP_KDB_STATUS=0
+                CERT_BACKUP_DIR="/hab/svc/aem-ssl-ihs/var/backup_restore"
                 if [[ "$FLAG" == "B" ]]
                 then
-                echo "Initiating Cert,CSR backup"
-                    if [[ ! -d "${USER_CONFIG_BR_DIR}" ]]; then
-                                        mkdir -p "${USER_CONFIG_BR_DIR}" || MKDIR_STATUS="$?"
-                                                        if [[ "${MKDIR_STATUS}" != 0 ]]
-                                                        then
-                                                                local USER_CONFIG_DIR
-                                                                USER_CONFIG_BR_DIR="${USER_CONFIG_DIR}"
-                                                        fi
+					echo "Initiating Cert,CSR backup"
+                    if [[ ! -d "${CERT_BACKUP_DIR}" ]]; then
+                         mkdir -p "${CERT_BACKUP_DIR}" || MKDIR_STATUS="$?"
+                            if [[ "${MKDIR_STATUS}" != 0 ]]
+                                then
+                                    echo "Backup Directory creation failed"
+									exit 1   ## Hard exit if the Directory creation failed
+                            fi
                     fi
-        		echo "Config backrestore directory is - ${USER_CONFIG_BR_DIR} "
+					echo "Created a temporary certificate backup directory - ${CERT_BACKUP_DIR}"
                     if [[ -f "${KDB}" ]];then
-                            cp -pf "${KDB}" "${USER_CONFIG_BR_DIR}" || CP_KDB_STATUS=1
-                        else
-                                echo "KDB file is not present"
-                    fi
-                    if [[ -f "${CERT}" ]];then
-                           cp -pf "${CERT}" "${USER_CONFIG_BR_DIR}" || CP_CERT_STATUS=1
-                        else
-                                echo "CERT file is not present"
-                        fi
-                    if [[ -f "${CSR}" ]];then
-                            cp -pf "${CSR}" "${USER_CONFIG_BR_DIR}" || CP_CSR_STATUS=1
-                        else
-                                echo "CSR file is not present"
-                         fi
-		    if [[ -f "${RDB}" ]];then
-                            cp -pf "${RDB}" "${USER_CONFIG_BR_DIR}" || CP_RDB_STATUS=1
-                        else
-                                echo "RDB file is not present"
-                        fi
-                    if [[ -f "${STH}" ]];then
-                           cp -pf "${STH}" "${USER_CONFIG_BR_DIR}" || CP_STH_STATUS=1
-                        else
-                                echo "STH file is not present"
-                        fi
-                    if [[ -f "${CRL}" ]];then
-                            cp -pf "${CRL}" "${USER_CONFIG_BR_DIR}" || CP_CRL_STATUS=1
-                        else
-                                echo "CRL file is not present"
-                        fi
-                     
-                    if [[ -f "${HOST_REQUEST_JSON}" ]];then
-                           cp -pf "${HOST_REQUEST_JSON}" "${USER_CONFIG_BR_DIR}" || CP_JSON_STATUS=1
-                        else
-                                echo "JSON file is not present"
-                             fi
-                     echo ""${CP_KDB_STATUS}" != 0 -o "${CP_CSR_STATUS}" != 0 -o "${CP_CERT_STATUS}" != 0 -o "${CP_JSON_STATUS}" != 0 -o "${CP_RDB_STATUS}" != 0 -o "${CP_CRL_STATUS}" != 0 -o "${CP_STH_STATUS}" != 0 "
-                        if [ "${CP_KDB_STATUS}" != 0 -o "${CP_CSR_STATUS}" != 0 -o "${CP_CERT_STATUS}" != 0 -o "${CP_JSON_STATUS}" != 0 -o "${CP_RDB_STATUS}" != 0 -o "${CP_CRL_STATUS}" != 0 -o "${CP_STH_STATUS}" != 0 ]
-                        then
-                                echo "Backup is partially complete"
-                        else
-                                echo "Backup is complete"
-                        fi
+                            cp -pf "${KDB}" "${CERT_BACKUP_DIR}" || CP_KDB_STATUS=1
 
-			
-	    elif [[ "$FLAG" == "R" ]]
-		then
-		    if [[ ! -d "${USER_CONFIG_BR_DIR}" ]]
-			then
-				USER_CONFIG_BR_DIR="${USER_CONFIG_DIR}"
-				if [[ ! -d "${USER_CONFIG_BR_DIR}" ]]
+                    fi
+                    if [ "${CP_KDB_STATUS}" != 0 ]
+                    then
+                        echo "Backup failed"
+						exit 1              ## Hard Exit if backup failed
+                    else
+                        echo "Backup is complete"
+                    fi
+
+
+				elif [[ "$FLAG" == "R" ]]
 				then
-                    			echo "There is no backup directory present,hence restore is not performed..."
-				fi
-	  	    else
-			    echo "Copying the files back to the original location"
-                                         CB_KDB_STATUS=0;CB_CSR_STATUS=0;CB_CERT_STATUS=0;CB_RDB_STATUS=0;CB_CRL_STATUS=0;CB_STH_STATUS=0;CB_JSON_STATUS=0
-					if [[ -f "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.kdb" ]];then
-    						cp -pf "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.kdb" "${KDB}" || CB_KDB_STATUS=1
-					else
-						echo "KDB file is not present"
-					fi
-					if [[ -f "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.csr" ]];then
-					   cp -pf "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.csr" "${CSR}" || CB_CSR_STATUS=1
-					else
-						echo "CSR file is not present"
-					fi
-					if [[ -f "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.cer" ]];then
-						cp -pf "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.cer" "${CERT}" || CB_CERT_STATUS=1
-					else
-						echo "CERT file is not present"
-					fi
-					if [[ -f "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.rdb" ]];then
-						cp -pf "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.kdb" "${RDB}" || CB_RDB_STATUS=1
-					else
-						echo "RDB file is not present"
-					fi
-					if [[ -f "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.crl" ]];then
-					   cp -pf "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.crl" "${CRL}" || CB_CRL_STATUS=1
-					else
-						echo "CRL file is not present"
-					fi
-					if [[ -f "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.sth" ]];then
-						cp -pf "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}.sth" "${STH}" || CB_STH_STATUS=1
-					else
-						echo "STH file is not present"
-					fi						
-					if [[ -f "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}_REQ.json" ]];then
-					   cp -pf "${USER_CONFIG_BR_DIR}/${SERVICE_HOSTNAME}_REQ.json" "${CERT}" || CB_JSON_STATUS=1
-					else
-						echo "JSON file is not present"
-					fi
-					echo "${CB_KDB_STATUS}" != 0 -o "${CB_CSR_STATUS}" != 0 -o "${CB_CERT_STATUS}" != 0 -o "${CB_JSON_STATUS}" != 0 -o "${CB_RDB_STATUS}" != 0 -o "${CB_CRL_STATUS}" != 0 -o "${CB_STH_STATUS}" != 0""				
-					if [ "${CB_KDB_STATUS}" != 0 -o "${CB_CSR_STATUS}" != 0 -o "${CB_CERT_STATUS}" != 0 -o "${CB_JSON_STATUS}" != 0 -o "${CB_RDB_STATUS}" != 0 -o "${CB_CRL_STATUS}" != 0 -o "${CB_STH_STATUS}" != 0 ]
+				
+					echo "Copying the files back to the original location"
+					CB_KDB_STATUS=0
+						if [[ -f "${CERT_BACKUP_DIR}/${SERVICE_HOSTNAME}.kdb" ]];then
+							cp -pf "${CERT_BACKUP_DIR}/${SERVICE_HOSTNAME}.kdb" "${KDB}" || CB_KDB_STATUS=1
+						fi
+
+					if [ "${CB_KDB_STATUS}" != 0 ]
 					then
-						echo "Restore is partially complete"
-					else
+						echo "Restore failed"
+						exit 1 					##  Hard Exit if restore failed
+					 else
 						echo "Restore is complete"
 					fi
-			fi
-		else
-		    echo "Invalid Flag is passed for backup/restore"
-		fi
-		
-	}
-	  
+				else
+				   echo "Invalid Flag is passed for backup/restore"
+				fi
+
+}
+ 
 
     function START_CERT_WORKFLOW()
     {
@@ -178,7 +82,7 @@ be4c4c2 9 days ago
         echo "JSON REQ status is $?"
         REQNUM="$(GET_REQUEST_NUM)"
         case "${REQNUM}" in
-        "0" ) 
+        "0" )
             echo "New cert - Request number returned ${REQNUM}"
             GET_CERT || return $?
             ;;
@@ -204,7 +108,7 @@ be4c4c2 9 days ago
         USER_CONFIG_DIR="/hab/user/{{svc.service}}/config"
         SERVERS_DOWN=0
         CERT_INSTALLED=""
-        MODIFY_SSL="{{cfg.revision.modify}}" 
+        MODIFY_SSL="{{cfg.revision.modify}}"
         CERTMAN_CFG_REQ='{{toJson cfg.certreq}}'
         TOML_HOST_CFG='{{toToml cfg.host}}'
         TOML_CERTMAN_CFG='{{toToml cfg.certman}}'
@@ -227,27 +131,27 @@ be4c4c2 9 days ago
         HOST_REQUEST_JSON="${SSL_SVC_DATA_PATH}/${SERVICE_HOSTNAME}_REQ.json"
         # IHS_HOST_REQNUM_JSON="${SSL_SVC_DATA_PATH}/${SERVICE_HOSTNAME}_REQNUM.json" ## May use may not
         DNAME="cn=${SERVICE_FQDN}, ou=ITO Support, o=Ford Motor Company, L=Dearborn, ST=Michigan, C=US"
-        
+       
         VLT_CODE=""
 
         if [ "{{cfg.vault.config.vltrqd}}" == "yes" ];
-        then 
+        then
             VLT_FETCH || VLT_CODE="$?"
 
             if [[ "${VLT_CODE}" == 126 || "${VLT_CODE}" == 1 ]]
             then
-                    
+                   
                 echo "Vault return code is $VLT_CODE"
                 echo "Vault Interaction failed"
                 sleep 15
                 exit;
-            else   
+            else  
                 echo "Vault Interaction Successful";
             fi
-        else 
+        else
             __default
         fi
-      
+     
         CMAPICRED
 
         SSL_CREATE="
@@ -265,13 +169,17 @@ be4c4c2 9 days ago
     #${SSL_SVC_DATA_PATH} does not exist, exiting something went wrong in setup.
     #=============================================================================
     "
-        
+       
         WORKFLOW_CODE=""
         CERTMANCHECK=$(__curl -s -X POST --header 'CONTENT-TYPE: application/json' --data "${CERTMAN_CREDS}" "${CERTMAN_URI}/OAuth/jwttoken" | jq -r '.status' )
         if [ "$CERTMANCHECK" == "Success" ];
-        then 
+        then
             echo "Certman Credentials are good. Proceeding further"
-            CERT_BKUP_RESTORE "B"
+			if [[ -f "${KDB}" ]];then
+                CERT_BKUP_RESTORE "B"
+            else
+                 echo "KDB file is not present, continuing with Cert WorkFlow"
+            fi
             START_CERT_WORKFLOW || WORKFLOW_CODE="$?"
             #echo "WORKFLOW CODE IS $WORKFLOW_CODE"
             if [[ "${WORKFLOW_CODE}" == 128 || "${WORKFLOW_CODE}" == 1 ]]
@@ -281,22 +189,26 @@ be4c4c2 9 days ago
                     echo -e "${SSL_CONFIGURED}"
                 else  
                     echo -e "Restarting workflow exited with code ${WORKFLOW_CODE}"
-	             CERT_BKUP_RESTORE "R"
+							if [[ -f "${CERT_BACKUP_DIR}/${SERVICE_HOSTNAME}.kdb" ]];then
+								CERT_BKUP_RESTORE "R"
+							else
+								echo "KDB file is not present, Restore is not triggered"
+							fi
                     break
                 fi
             else
                 echo -e "${SSL_CONFIGURED}"
-                
+               
                 echo -e ""
                 if [[ "{{cfg.revision.modify}}" == "yes" ]]
                 then
                     RESET_MODIFY_CONFIG
                 fi
             fi
-        else 
+        else
             echo "Certman Credentials are invalid.Therefore, exiting"
             echo "Make sure the Certman credential is upto date in Vault";
-			
+
             break;
         fi
 
@@ -305,11 +217,3 @@ be4c4c2 9 days ago
     done
 
     sleep 1200
-© 2020 GitHub, Inc.
-Help
-Support
-API
-Training
-Blog
-About
-GitHub Enterprise Server 2.19.5
