@@ -13,24 +13,16 @@
 00:00:00.444071          VirtualBox: object creation starts
 00:00:00.444176          Home directory: 'C:\Users\sramine1'
 00:00:00.444281          Installed Drivers:
-gdkfsdf
-00:00:00.446518            C:\WINDOWS\system32\DRIVERS\VBoxNetLwf.sys (Version: 6.0.12.33076)
-00:00:00.447311            C:\WINDOWS\system32\DRIVERS\VBoxUSBMon.sys (Version: 6.0.12.33076)
-00:00:00.447741            C:\Program Files\Oracle\VirtualBox\drivers\vboxdrv\VBoxDrv.sys (Version: 6.0.12.33076)
-00:00:00.448960            C:\WINDOWS\system32\DRIVERS\VBoxNetAdp6.sys (Version: 6.0.12.33076)
-00:00:00.456850          Loading settings file "C:\Users\sramine1\VirtualBox.xml" with version "1.12-windows"
-00:00:00.463757          Getting USB descriptor (id 0) failed with error 31
+
 00:00:00.463886          Getting USB descriptor (id 0) failed with error 31
 00:00:00.483144          USB: Unknown USB device detected (idVendor: 0x0a5c, idProduct: 0x5832)
 00:00:00.483185          USB: Unknown USB device detected (idVendor: 0x8087, idProduct: 0x0a2b)
-00:00:00.691069          HostDnsMonitor::updateInfo
 00:00:00.691093          HostDnsMonitor: old information
 00:00:00.691095            no server entries
 vkhfvkajf
 00:00:00.691096            no domain set
 00:00:00.691096            no search string entries
 00:00:00.691097          HostDnsMonitor: new information
-00:00:00.691098            server 1: 19.106.96.250
 00:00:00.691099            server 2: 19.106.100.250
 00:00:00.691099            server 3: 19.155.192.72
 jhfahsdfl
@@ -42,3 +34,9 @@ vfljfv
 00:00:00.691101            search string 3: ford.com
 00:00:00.691102            search string 4: itbic.ford.com
 00:00:00.764946          VD: VDInit finished with VINF_SUCCESS
+gdkfsdf
+00:00:00.446518            C:\WINDOWS\system32\DRIVERS\VBoxNetLwf.sys (Version: 6.0.12.33076)
+00:00:00.447311            C:\WINDOWS\system32\DRIVERS\VBoxUSBMon.sys (Version: 6.0.12.33076)
+00:00:00.447741            C:\Program Files\Oracle\VirtualBox\drivers\vboxdrv\VBoxDrv.sys (Version: 6.0.12.33076)
+00:00:00.448960            C:\WINDOWS\system32\DRIVERS\VBoxNetAdp6.sys (Version: 6.0.12.33076)
+00:00:00.456850          Loading settings file "C:\Users\sramine1\VirtualBox.xml" with version "1.12-windows"
