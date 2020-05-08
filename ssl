@@ -1,0 +1,219 @@
+#!/bin/bash
+
+    exec 2>&1
+
+    source "{{pkg.svc_config_path}}/helpers.sh"
+
+    function CERT_BKUP_RESTORE()
+    {
+        FLAG=$1
+        MKDIR_STATUS=0
+        CP_KDB_STATUS=0
+                CERT_BACKUP_DIR="/hab/svc/aem-ssl-ihs/var/backup_restore"
+                if [[ "$FLAG" == "B" ]]
+                then
+					echo "Initiating Cert,CSR backup"
+                    if [[ ! -d "${CERT_BACKUP_DIR}" ]]; then
+                         mkdir -p "${CERT_BACKUP_DIR}" || MKDIR_STATUS="$?"
+                            if [[ "${MKDIR_STATUS}" != 0 ]]
+                                then
+                                    echo "Backup Directory creation failed"
+									exit 1   ## Hard exit if the Directory creation failed
+                            fi
+                    fi
+					echo "Created a temporary certificate backup directory - ${CERT_BACKUP_DIR}"
+                    if [[ -f "${KDB}" ]];then
+                            cp -pf "${KDB}" "${CERT_BACKUP_DIR}" || CP_KDB_STATUS=1
+
+                    fi
+                    if [ "${CP_KDB_STATUS}" != 0 ]
+                    then
+                        echo "Backup failed"
+						exit 1              ## Hard Exit if backup failed
+                    else
+                        echo "Backup is complete"
+                    fi
+
+
+				elif [[ "$FLAG" == "R" ]]
+				then
+				
+					echo "Copying the files back to the original location"
+					CB_KDB_STATUS=0
+						if [[ -f "${CERT_BACKUP_DIR}/${SERVICE_HOSTNAME}.kdb" ]];then
+							cp -pf "${CERT_BACKUP_DIR}/${SERVICE_HOSTNAME}.kdb" "${KDB}" || CB_KDB_STATUS=1
+						fi
+
+					if [ "${CB_KDB_STATUS}" != 0 ]
+					then
+						echo "Restore failed"
+						exit 1 					##  Hard Exit if restore failed
+					 else
+						echo "Restore is complete"
+					fi
+				else
+				   echo "Invalid Flag is passed for backup/restore"
+				fi
+
+}
+ 
+
+    function START_CERT_WORKFLOW()
+    {
+        echo "Starting the Cert Workflow"
+        if [[ "${MODIFY_SSL}" == "yes" ]]
+        then
+            CSR_DELETE || echo -e "Removing ${CSR} experienced an issue"
+            CERT_DELETE || echo -e "Removing ${CERT} experienced an issue"
+            CA_DELETE "${ROOT_CERT}" "root" || echo -e "Removing ${ROOT_CERT} from ${KDB} experienced an issue"
+            CA_DELETE "${INT_CERT}" "int" || echo -e "Removing ${INT_CERT} from ${KDB} experienced an issue"
+            CERTKDB_DELETE || echo -e "Removing ${CERT}  from ${KDB} experienced an issue"
+
+        fi
+
+        KDB_CHECK || return $?
+        echo "KDB CHECK status is $?"
+        JWT_TOKEN="$(GET_TOKEN)"
+        KDB_CREATE || return $?
+        echo "KDB CREATE status is $?"
+        CSR_CREATE || return $?
+        echo "CSR CREATE status is $?"
+        CREATE_JSON_REQ || return $?
+        echo "JSON REQ status is $?"
+        REQNUM="$(GET_REQUEST_NUM)"
+        case "${REQNUM}" in
+        "0" )
+            echo "New cert - Request number returned ${REQNUM}"
+            GET_CERT || return $?
+            ;;
+        * )
+            echo -e "Cert exists and the request number is ${REQNUM}"
+            GET_CERT "${REQNUM}" || return $?
+            ;;
+        esac
+
+        CA_UPLOAD "${ROOT_CERT}" "root" || return $?
+        echo "CA UPLOAD ROOT status is $?"
+        CA_UPLOAD "${INT_CERT}" "int" || return $?
+        echo "CA UPLOAD iNT status is $?"
+        CERT_UPLOAD "${CERT}" || return $?
+        echo "CERT UPLOAD status is $?"
+    }
+
+    while true
+    do
+        LD_LIBRARY_PATH="${IHS_HOME}/lib:${IHS_HOME}/modules:${IHS_HOME}/gsk8/lib64:${LD_LIBRARY_PATH}"
+        export LD_LIBRARY_PATH
+        __GSKIT="${IHS_HOME}/gsk8/bin/gsk8capicmd_64"
+        USER_CONFIG_DIR="/hab/user/{{svc.service}}/config"
+        SERVERS_DOWN=0
+        CERT_INSTALLED=""
+        MODIFY_SSL="{{cfg.revision.modify}}"
+        CERTMAN_CFG_REQ='{{toJson cfg.certreq}}'
+        TOML_HOST_CFG='{{toToml cfg.host}}'
+        TOML_CERTMAN_CFG='{{toToml cfg.certman}}'
+        TOML_CERTREQ_CFG='{{toToml cfg.certreq}}'
+        TOML_VAULT='{{toToml cfg.vault.config}}'
+        ROOT_CERT="{{pkg.svc_config_path}}/root.pem"
+        INT_CERT="{{pkg.svc_config_path}}/int.pem"
+        CERTMAN_URI="{{cfg.certman.uri}}"
+        SERVICE_HOSTIP="{{sys.ip}}"
+        SERVICE_HOSTNAME="$(hostname -s)"
+        SERVICE_FQDN="$(hostname -f)"
+        SERVICE_URL="http://${SERVICE_FQDN}:${SERVICE_PORT}"
+        SERVICE_SSL_URL="https://${SERVICE_FQDN}:${SERVICE_SSL_PORT}"
+        SERVICE_PKG_NAME="{{pkg.name}}"
+        # IHS_KEY_PWD="{{cfg.creds.kpasswd}}" ## Leaving as a placeholder for future use
+        SSL_SVC_DATA_PATH="{{pkg.svc_data_path}}"
+        KDB="${SSL_SVC_DATA_PATH}/${SERVICE_HOSTNAME}.kdb"
+        CSR="${SSL_SVC_DATA_PATH}/${SERVICE_HOSTNAME}.csr"
+        CERT="${SSL_SVC_DATA_PATH}/${SERVICE_HOSTNAME}.cer"
+        HOST_REQUEST_JSON="${SSL_SVC_DATA_PATH}/${SERVICE_HOSTNAME}_REQ.json"
+        # IHS_HOST_REQNUM_JSON="${SSL_SVC_DATA_PATH}/${SERVICE_HOSTNAME}_REQNUM.json" ## May use may not
+        DNAME="cn=${SERVICE_FQDN}, ou=ITO Support, o=Ford Motor Company, L=Dearborn, ST=Michigan, C=US"
+       
+        VLT_CODE=""
+
+        if [ "{{cfg.vault.config.vltrqd}}" == "yes" ];
+        then
+            VLT_FETCH || VLT_CODE="$?"
+
+            if [[ "${VLT_CODE}" == 126 || "${VLT_CODE}" == 1 ]]
+            then
+                   
+                echo "Vault return code is $VLT_CODE"
+                echo "Vault Interaction failed"
+                sleep 15
+                exit;
+            else  
+                echo "Vault Interaction Successful";
+            fi
+        else
+            __default
+        fi
+     
+        CMAPICRED
+
+        SSL_CREATE="
+    #=============================================================================
+    #Creating SSL certificates for ${SERVICE_HOSTNAME}
+    #=============================================================================
+    "
+        SSL_CONFIGURED="
+    #=============================================================================
+    #SSL Configured on ${SERVICE_HOSTNAME}
+    #=============================================================================
+    "
+        SSL_SVC_DATA_PATH_DNE="
+    #=============================================================================
+    #${SSL_SVC_DATA_PATH} does not exist, exiting something went wrong in setup.
+    #=============================================================================
+    "
+       
+        WORKFLOW_CODE=""
+        CERTMANCHECK=$(__curl -s -X POST --header 'CONTENT-TYPE: application/json' --data "${CERTMAN_CREDS}" "${CERTMAN_URI}/OAuth/jwttoken" | jq -r '.status' )
+        if [ "$CERTMANCHECK" == "Success" ];
+        then
+            echo "Certman Credentials are good. Proceeding further"
+			if [[ -f "${KDB}" ]];then
+                CERT_BKUP_RESTORE "B"
+            else
+                 echo "KDB file is not present, continuing with Cert WorkFlow"
+            fi
+            START_CERT_WORKFLOW || WORKFLOW_CODE="$?"
+            #echo "WORKFLOW CODE IS $WORKFLOW_CODE"
+            if [[ "${WORKFLOW_CODE}" == 128 || "${WORKFLOW_CODE}" == 1 ]]
+            then
+                if [ CERT_INSTALLED="yes" ]
+                then
+                    echo -e "${SSL_CONFIGURED}"
+                else  
+                    echo -e "Restarting workflow exited with code ${WORKFLOW_CODE}"
+							if [[ -f "${CERT_BACKUP_DIR}/${SERVICE_HOSTNAME}.kdb" ]];then
+								CERT_BKUP_RESTORE "R"
+							else
+								echo "KDB file is not present, Restore is not triggered"
+							fi
+                    break
+                fi
+            else
+                echo -e "${SSL_CONFIGURED}"
+               
+                echo -e ""
+                if [[ "{{cfg.revision.modify}}" == "yes" ]]
+                then
+                    RESET_MODIFY_CONFIG
+                fi
+            fi
+        else
+            echo "Certman Credentials are invalid.Therefore, exiting"
+            echo "Make sure the Certman credential is upto date in Vault";
+
+            break;
+        fi
+
+        sleep 12000
+
+    done
+
+    sleep 1200
